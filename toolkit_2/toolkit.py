@@ -1,30 +1,6 @@
-from .learner import *
-from .dataset import *
-from .measurements import *
+from .manager import MLSystemManager
 
 import argparse
-import time
-import random
-
-class MLSystemManager(object):
-
-    def get_learner(self, model):
-        modelmap = {
-            "baseline": BaselineLearner,
-        }
-        if model in modelmap:
-            return modelmap[model]()
-        else:
-            raise Exception("Unrecognized model: {}".format(model))
-
-    def load_dataset(self, file):
-        return Dataset(file)
-
-    def separate_targets(self, datasets):
-        features = [dataset.inputs for dataset in datasets]
-        targets = [dataset.targets for dataset in datasets]
-        return features, targets
-
 
 
 def get_args():
@@ -43,7 +19,7 @@ def get_args():
                         required=True,
                         help='ARFF formatted dataset file.')
 
-    parser.add_argument('eval_method',
+    parser.add_argument('eval_methods',
                         metavar=['-e', '-E'],
                         required=True,
                         nargs='+',
@@ -75,7 +51,6 @@ def get_args():
 
 if __name__ == "main":
     args = get_args()
-
     manager = MLSystemManager()
 
     model = manager.get_learner(args.learner)
@@ -84,46 +59,24 @@ if __name__ == "main":
     if args.normalize:
         dataset.normalize()
 
-    print(f'Dataset Name: {dataset.name}')
-    print(f'Dataset Size: {dataset.size}')
-    print(f'Number of Attributes: {dataset.num_attributes}')
-    print(f'Learning Algorithm: {args.learner}')
-    print(f'Evaluation Method(s):' + ", ".join(args.eval_method))
-
+    # Configure training/validation/testing split.
     if not args.split:
-        # No dataset split
-        pass
-
+        manager.no_split()
     elif len(args.split) == 1:
-        # Do crossfold validation
-        splits = [1/args.split[0] for _ in range(args.split[0])]
-        datasets = dataset.split(splits)
-        feature_folds, target_folds = manager.separate_targets(datasets)
-
+        manager.cross_validation()
     elif len(args.split) == 2:
-        # training/testing
-        datasets = dataset.split(args.split)
-        features, targets = manager.separate_targets(datasets)
-        train_features, test_features = features
-        train_targets, test_targets = targets
-
+        manager.no_validation()
     elif len(args.split) == 3:
-        # training/validation/testing
-        datasets = dataset.split(args.split)
-        features, targets = manager.separate_targets(datasets)
-        train_features, val_features, test_features = features
-        train_targets, val_targets, test_targets = targets
+        manager.do_validation()
 
+    # Print description of your basic configuration.
+    manager.describe(dataset, args.learner, args.eval_method)
 
-    switch = {
-        'training-sse':,
-        'training-mse':,
-        'training-rmse':,
-        'training-confusion':,
-        'training-categorical':,
-        'sse':,
-        'mse':,
-        'rmse':,
-        'confusion':,
-        'categorical':,
-    }
+    # Do training.
+    features, targets = manager.split(dataset, args.split)
+    manager.train(model, features, targets)
+
+    # Do model evaluation
+    metrics = manager.gather_metrics(args.eval_methods)
+    manager.test(model, features, targets, metrics)
+

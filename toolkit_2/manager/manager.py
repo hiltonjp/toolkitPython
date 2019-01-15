@@ -1,0 +1,86 @@
+from ..dataset import *
+from ..learner import *
+
+from .measurements import *
+from .states import *
+
+import matplotlib.pyplot as plt
+
+class MLSystemManager(object):
+
+    def __init__(self):
+        self.state = NoValidation()
+        self.metrics = {
+            'sse':(sse,"Sum Squared Error"),
+            'mse':(mse, "Mean Squared Error"),
+            'rmse':(rmse, "Root Mean Squared Error"),
+            'confusion':(confusion_matrix, "Confusion Matrix"),
+            'categorical':(categorical_accuracy, "Raw Accuracy")
+        }
+
+    def get_learner(self,model):
+        modelmap = {
+            "baseline": BaselineLearner,
+        }
+        if model in modelmap:
+            return modelmap[model]()
+        else:
+            raise Exception("Unrecognized model: {}".format(model))
+
+    def gather_metrics(self, methods):
+        """Gather up the types of metrics the user wants for their model."""
+        return [self.metrics[method] for method in methods]
+
+
+    ############################################################################
+    # DATASET MANAGEMENT INTERFACE                                             #
+    ############################################################################
+
+    def load_dataset(self, file):
+        return Dataset(file)
+
+    def split(self, dataset, split):
+        return self.state.split(dataset, split)
+
+    ############################################################################
+    # STATE INTERFACE                                                          #
+    ############################################################################
+
+    def do_validation(self):
+        self.state = WithValidation()
+
+    def cross_validation(self):
+        self.state = CrossValidation()
+
+    def no_validation(self):
+        self.state = NoValidation()
+
+    def no_split(self):
+        self.state = NoSplit()
+
+    ############################################################################
+    # TRAINING/TESTING                                                         #
+    ############################################################################
+
+    def describe(self, dataset, learner_name, eval_methods):
+        print(f'Dataset Name: {dataset.name}')
+        print(f'Dataset Size: {dataset.size}')
+        print(f'Number of Attributes: {dataset.num_attributes}')
+        print(f'Learning Algorithm: {learner_name}')
+        print(f'Evaluation Method(s):' + ", ".join(eval_methods))
+        print()
+
+    def train(self, model, features, targets):
+        self.state.train(model, features, targets)
+
+    def test(self, model, features, targets, methods):
+        self.state.test(model, features, targets, methods)
+
+    def display(self, metrics):
+        for name in metrics:
+            if name is "Confusion Matrix":
+                mat = metrics[name]
+                plt.title(name)
+                plt.xticks(range(mat.shape[0]), )
+                plt.imshow(mat)
+                plt.show()
