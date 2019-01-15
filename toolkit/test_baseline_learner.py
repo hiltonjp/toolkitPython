@@ -8,7 +8,7 @@ from matrix import Matrix
 class TestBaselineLearner(TestCase):
 
     labels = Matrix()
-    labels.load_arff("test/cm1_req.arff")
+    labels._load_arff("test/cm1_req.arff")
     l = BaselineLearner()
 
     def test_train(self):
