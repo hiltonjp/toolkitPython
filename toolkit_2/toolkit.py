@@ -2,7 +2,6 @@ from .manager import MLSystemManager
 
 import argparse
 
-
 def get_args():
     parser = argparse.ArgumentParser(
         description="CS 478 Toolkit Command Line Module")
@@ -77,6 +76,7 @@ if __name__ == "main":
     manager.train(model, features, targets)
 
     # Do model evaluation
-    metrics = manager.gather_metrics(args.eval_methods)
-    manager.test(model, features, targets, metrics)
+    methods = manager.gather_metrics(args.eval_methods)
+    metrics = manager.test(model, features, targets, methods)
+    manager.display(metrics)
 
