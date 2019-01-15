@@ -47,7 +47,7 @@ class Dataset(object):
     def inputs(self):
         """The input features of the data."""
         d = Dataset()
-        d._data = self._data[:, :self.size]
+        d._data = self._data[:, :-1]
         d._attributes = self._attributes
         d._str_to_enum = self._str_to_enum
         d._enum_to_str = self._enum_to_str
@@ -60,6 +60,8 @@ class Dataset(object):
 
         d = Dataset()
         d._data = self._data[:, -1]
+        d._data = d._data[:, np.newaxis]
+
         d._attributes = self._attributes
         d._str_to_enum = self._str_to_enum
         d._enum_to_str = self._enum_to_str
@@ -76,7 +78,7 @@ class Dataset(object):
     def attribute_name(self, col):
         return self._attributes[col]
 
-    def atribute_value(self, col, val):
+    def attribute_value(self,col,val):
         return self._enum_to_str[col][val]
 
     def is_continuous(self, col=0):
@@ -98,6 +100,7 @@ class Dataset(object):
 
                 num_entries = int(split*self.size)
                 d._data = self._data[:num_entries]
+                self._data = self._data[num_entries:]
 
                 datasets.append(d)
 
@@ -192,12 +195,12 @@ class Dataset(object):
         self._attributes.append(attr_name)
 
         # Parse discrete values, if any.
+        str_to_enum = {}
+        enum_to_str = {}
+
         if not (attr_def.lower() == "real" or attr_def.lower() == "continuous" or attr_def.lower() == "integer"):
             assert attr_def[0] == '{' and attr_def[-1] == '}', \
                 "Enclose discrete values with {,}."
-
-            str_to_enum = {}
-            enum_to_str = {}
 
             attr_def = attr_def[1:-1]
             attr_vals = attr_def.split(",")
@@ -207,8 +210,8 @@ class Dataset(object):
                 enum_to_str[idx] = val
                 str_to_enum[val] = idx
 
-            self._enum_to_str.append(enum_to_str)
-            self._str_to_enum.append(str_to_enum)
+        self._enum_to_str.append(enum_to_str)
+        self._str_to_enum.append(str_to_enum)
 
     def _load_datapoint(self, arff_line):
         """Load a single point of data from the ARFF file."""
@@ -219,9 +222,9 @@ class Dataset(object):
             if not val:
                 pass
             else:
-                # Tries to convert val into discrete value enumerations.
-                # If this fails, then the value is continuous and float() casts
-                # the string into a true float.
+                # Tries to convert val into continuous value.
+                # If this fails, then the value is discrete and float() casts
+                # the string into an enumeration.
                 datum = float(self.MISSING if val == '?' else self._str_to_enum[idx].get(val, val))
                 row.append(datum)
 
