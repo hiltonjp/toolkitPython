@@ -1,13 +1,13 @@
 from ..dataset import *
-from ..learner import *
 
 from .measurements import *
 from .states import *
 
+from ..learners import *
+
 import matplotlib.pyplot as plt
 
 class MLSystemManager(object):
-
     def __init__(self):
         self.state = NoValidation()
         self.metrics = {
@@ -18,12 +18,17 @@ class MLSystemManager(object):
             'categorical':(categorical_accuracy, "Raw Accuracy")
         }
 
-    def get_learner(self,model):
-        modelmap = {
-            "baseline": BaselineLearner,
+        self.models = {
+            'baseline':BaselineLearner,
+            'perceptron':Perceptron,
+            'neuralnet':NeuralNet,
+            'knn':KNN,
+            'decisiontree':DecisionTree
         }
-        if model in modelmap:
-            return modelmap[model]()
+
+    def get_learner(self,model):
+        if model in self.models:
+            return self.models[model]()
         else:
             raise Exception("Unrecognized model: {}".format(model))
 
