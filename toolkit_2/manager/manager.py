@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 class MLSystemManager(object):
     def __init__(self):
         self.state = NoValidation()
+
+        # Options for evaluating a model
         self.metrics = {
             'sse':(sse,"Sum Squared Error"),
             'mse':(mse, "Mean Squared Error"),
@@ -18,6 +20,7 @@ class MLSystemManager(object):
             'categorical':(categorical_accuracy, "Raw Accuracy")
         }
 
+        # Options of model
         self.models = {
             'baseline':BaselineLearner,
             'perceptron':Perceptron,
@@ -25,6 +28,7 @@ class MLSystemManager(object):
             'knn':KNN,
             'decisiontree':DecisionTree
         }
+
 
     def get_learner(self,model):
         if model in self.models:
