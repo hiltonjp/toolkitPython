@@ -27,7 +27,7 @@ class DatasetTest(TestCase):
         self.assertFalse(dataset.is_continuous(3))
 
         self.assertTrue(row.shape[0] == 4)
-        self.assertTrue(col.shape[1] == 3)
+        self.assertTrue(col.shape[0] == 8)
 
-        self.assertTrue(dataset.attribute_name(4) == "class")
+        self.assertTrue(dataset.attribute_name(3) == "class")
         self.assertTrue(dataset.attribute_name(0) == 'x1')
