@@ -1,5 +1,4 @@
-from ..dataset import *
-
+from .dataset import *
 from .measurements import *
 from .states import *
 
