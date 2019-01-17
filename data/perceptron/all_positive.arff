@@ -1,0 +1,15 @@
+@RELATION all-positive
+
+@ATTRIBUTE num1 CONTINUOUS
+@ATTRIBUTE num2 CONTINUOUS
+@ATTRIBUTE class {True, False}
+
+@DATA
+0.4, 0.2, True
+0.1, 0.1, True
+0.95, 0.14, True
+0.08, 0.67, True
+-0.4, -0.2, False
+-0.8, 0.1, False
+-0.1, 0.905, False
+0.86, -0.09, False

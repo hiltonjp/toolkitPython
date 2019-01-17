@@ -1,0 +1,15 @@
+@RELATION greater-than
+
+@ATTRIBUTE x CONTINUOUS
+@ATTRIBUTE y CONTINUOUS
+@ATTRIBUTE class {True, False}
+
+@DATA
+0.1, 0.2, True
+-0.55, 0.56, True
+-0.65, -0.35, True
+0.8, 0.9, True
+0.6, 0.5, False
+0.13, 0.01, False
+0.089, -0.29, False
+0.9, -0.8, False
