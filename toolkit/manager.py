@@ -24,7 +24,7 @@ class MLSystemManager:
         """
         modelmap = {
             "baseline": BaselineLearner(),
-            "perceptron": Perceptron(),
+            # "perceptron": Perceptron(),
             #"neuralnet": NeuralNetLearner(),
             #"decisiontree": DecisionTreeLearner(),
             #"knn": InstanceBasedLearner()
