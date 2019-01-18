@@ -57,3 +57,4 @@ data/
 .idea/
 toolkit/manager.py
 toolkit_2/
+tests/
