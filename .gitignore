@@ -51,3 +51,9 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+toolkit/labs/
+data/
+.idea/
+toolkit/manager.py
+toolkit_2/

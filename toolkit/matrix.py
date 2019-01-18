@@ -66,11 +66,11 @@ class Matrix:
             raise Exception("out of range")
 
         if __debug__:
-            for col in range(self.cols):
-                if matrix.value_count(col_start + col) != self.value_count(col):
+            for col in range(self.num_attributes):
+                if matrix.is_continuous(col_start + col) != self.is_continuous(col):
                     raise Exception("incompatible relations")
 
-        for i in range(matrix.rows - row_start):
+        for i in range(matrix.size - row_start):
             self.data.append(matrix.data[row_start + i][col_start:col_start + col_count])
 
     def set_size(self, rows, cols):

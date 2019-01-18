@@ -1,0 +1,18 @@
+% test ARFF file.
+
+@RELATION test
+
+@ATTRIBUTE x1 CONTINUOUS
+@ATTRIBUTE x2 CONTINUOUS
+@ATTRIBUTE x3 {False, True}
+@ATTRIBUTE class {class1, class2, class3, class4}
+
+@DATA
+0.1, 0.1, False, class1
+0.2, 0.2, False, class2
+0.3, 0.3, True, class3
+0.4, 0.4, True, class4
+0.1, 0.1, True, class1
+0.2, 0.2, True, class2
+0.3, 0.3, False, class3
+0.4, 0.4, False, class4

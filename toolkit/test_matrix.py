@@ -34,39 +34,39 @@ class TestMatrix(TestCase):
 
     def test_init_from(self):
         m2 = Matrix(self.m, 1, 1, 2, 2)
-        self.assertListEqual(m2.row(0), [-8, 2])
-        self.assertListEqual(m2.row(1), [self.infinity, 2])
+        self.assertListEqual(m2.get(0), [-8, 2])
+        self.assertListEqual(m2.get(1), [self.infinity, 2])
 
     def test_add(self):
         self.m.add(self.m2, 0, 2, 3)
         self.m.print()
-        self.assertListEqual(self.m.row(3), self.m2.row(0)[2:])
+        self.assertListEqual(self.m.get(3), self.m2.get(0)[2:])
         self.m.add(self.m2, 3, 2, 3)
         self.m.print()
-        self.assertListEqual(self.m.row(9), self.m2.row(4)[2:])
+        self.assertListEqual(self.m.get(9), self.m2.get(4)[2:])
 
     def test_set_size(self):
         m = Matrix()
         m.set_size(3, 4)
-        self.assertEqual(m.rows, 3)
-        self.assertEqual(m.cols, 4)
+        self.assertEqual(m.size, 3)
+        self.assertEqual(m.num_attributes, 4)
 
     def test_load_arff(self):
         t = Matrix()
-        t.load_arff("test/cm1_req.arff")
-        self.assertListEqual(t.row(t.rows-1), [1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 3.0, 1.0, 1.0])
+        t._load_arff("test/cm1_req.arff")
+        self.assertListEqual(t.get(t.size - 1), [1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 3.0, 1.0, 1.0])
 
     def test_rows(self):
-        self.assertEquals(self.m.rows, 3)
+        self.assertEquals(self.m.size, 3)
 
     def test_cols(self):
-        self.assertEquals(self.m.cols, 3)
+        self.assertEquals(self.m.num_attributes, 3)
 
     def test_row(self):
-        self.assertListEqual(self.m.row(1), [2.3, -8, 2])
+        self.assertListEqual(self.m.get(1), [2.3, -8, 2])
 
     def test_col(self):
-        self.assertListEqual(self.m.col(1), [-6, -8, self.infinity])
+        self.assertListEqual(self.m.get_attribute_column(1), [-6, -8, self.infinity])
 
     def test_get(self):
         self.assertEquals(self.m.get(0, 2), 1)
@@ -88,8 +88,8 @@ class TestMatrix(TestCase):
         self.assertEquals(self.m.attr_value(2, 0), 'R')
 
     def test_value_count(self):
-        self.assertEquals(self.m.value_count(1), 0)     # continuous
-        self.assertEquals(self.m.value_count(2), 3)     # R, G, B
+        self.assertEquals(self.m.is_continuous(1), 0)     # continuous
+        self.assertEquals(self.m.is_continuous(2), 3)     # R, G, B
 
     def test_shuffle(self):
         self.m.shuffle()
