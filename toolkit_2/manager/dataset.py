@@ -1,36 +1,64 @@
 import random
 import numpy as np
 import re
+from copy import copy
 
 
 class Dataset(object):
     """Dataset(self, arff=None)
 
+    An Attribute-Relation Dataset.
 
+    NOTE: This class makes two assumptions:
+        1. That the target attribute is given as the LAST attribute in the file.
+        2. Nominal (discrete) attributes are treated as a single column in the
+           underlying numpy array, and so are really floats ranging from 0-N,
+           with N being the number of enumerated values for that given
+           attribute. Names for these
+
+    Args:
+        arff (str): The path to an ARFF file.
+
+    Attributes:
+        name (str): The name of the dataset.
+
+        size (int): The number of instances (data entries) in the dataset.
+
+        num_attributes (int): The number of attributes each instance has,
+            including the target attribute.
+
+        inputs (numpy.ndarray): The input attributes to be used in training.
+            If you have M instances of data in your dataset, and N non-target
+            attributes, then Dataset.inputs will yield a numpy array for shape
+            (M, N), that is, M rows and N columns.
+
+        targets (numpy.ndarray): The target attributes to be used in training.
+            If you have M instances, then Dataset.targets yields a numpy array
+            of shape (M, 1), that is, M rows and 1 column.
     """
 
     # STATIC variables
     MISSING = float("infinity")
 
     def __init__(self, arff=None):
-        """
-        If matrix is provided, all parameters must be provided, and the new matrix will be
-        initialized with the specified portion of the provided matrix.
-        """
-        self._data = []
-        self._attributes = []
-        self._str_to_enum = []
-        self._enum_to_str = []
-        self._dataset_name = "Untitled"
 
-        # iterator helpers
-        self._cur = 0
+        # DO NOT ACCESS THESE DIRECTLY
+        self._data = None
+        self._attributes = None
+        self._str_to_enum = None
+        self._enum_to_str = None
+        self._dataset_name = None
 
         if arff:
             self._load_arff(arff)
 
+    ############################################################################
+    # ATTRIBUTES                                                               #
+    ############################################################################
+
     @property
     def name(self):
+        """The name of the dataset."""
         return self._dataset_name
 
     @property
@@ -46,91 +74,145 @@ class Dataset(object):
     @property
     def inputs(self):
         """The input features of the data."""
-        d = Dataset()
-        d._data = self._data[:, :-1]
-        d._attributes = self._attributes
-        d._str_to_enum = self._str_to_enum
-        d._enum_to_str = self._enum_to_str
-        d._dataset_name = self._dataset_name
-        return d
+        return self._data[:, :-1]
 
     @property
     def targets(self):
         """Expected target values."""
+        return self._data[:, -1]
 
-        d = Dataset()
-        d._data = self._data[:, -1]
-        d._data = d._data[:, np.newaxis]
+    ############################################################################
+    # PUBLIC API                                                               #
+    ############################################################################
 
-        d._attributes = self._attributes
-        d._str_to_enum = self._str_to_enum
-        d._enum_to_str = self._enum_to_str
-        d._dataset_name = self._dataset_name
-        return d
+    def get_data(self):
+        return self._data
 
+    def set_data(self, data):
+        self._data = data
 
-    def get(self, idx):
-        return self._data[idx]
+    def numpy(self):
+        """Get the numpy array containing all data for the set.
 
-    def get_attribute_column(self, idx):
-        return self._data[:, idx]
+        This includes both input attributes and respective targets.
 
-    def attribute_name(self, col):
-        return self._attributes[col]
+        Returns:
+            (numpy.ndarray): A numpy array containing your data for the set.
+            If you have M instances of data, and N attributes defined
+            (including the target), then the returned array will have a
+            shape of (M, N)--M rows, N columns.
+        """
+        return self._data
 
-    def attribute_value(self,col,val):
-        return self._enum_to_str[col][val]
+    def attribute_name(self, index):
+        """Gets the name of an attribute defined in the ARFF file.
 
-    def is_continuous(self, col=0):
-        num = len(self._enum_to_str[col]) if len(self._enum_to_str) > 0 else 0
-        return True if num == 0 else False
+        Attribute names are stored in the order presented in the ARFF file.
 
-    def split(self, splits=[0.5, 0.5]):
-        datasets = []
+        Args:
+            index (int): The index of the desired attribute.
 
-        for i, split in enumerate(splits):
-            if i == len(splits)-1:
-                datasets.append(self)
-            else:
-                d = Dataset()
-                d._dataset_name = self._dataset_name
-                d._attributes = self._attributes
-                d._str_to_enum = self._str_to_enum
-                d._enum_to_str = self._enum_to_str
+        Returns:
+            (str): The name of the attribute.
+        """
+        return self._attributes[index]
 
-                num_entries = int(split*self.size)
-                d._data = self._data[:num_entries]
-                self._data = self._data[num_entries:]
+    def nominal_labels(self, attr_index):
+        """Get the labels for a nominal attribute's enumerated values.
 
-                datasets.append(d)
+        Args:
+            attr_index (int): The index of the desired attribute
 
-        return datasets
+        Returns:
+            (list[str...]): A list of the labels given to that attribute's
+                enumerated values.
+        """
+        try:
+            return self._enum_to_str[attr_index]
+        except IndexError:
+            raise IndexError(f"Attribute {attr_index} is not nominal.")
 
-    def shuffle(self, buddy=None):
-        """Shuffle the dataset.
+    def is_continuous(self, attr_index):
+        """Check if an attribute from the ARFF file is continuous.
 
-        If a buddy dataset is provided, it will be shuffled in the same order.
+        Args:
+            attr_index (int): The index of the desired attribute
+
+        Returns:
+            (bool): True if the attribute is continuous; False otherwise.
         """
 
-        if not buddy:
-            random.shuffle(self._data)
+        num = len(self._enum_to_str[attr_index]) if len(self._enum_to_str) > 0 else 0
+        return True if num == 0 else False
+
+    def is_nominal(self, attr_index):
+        """Check if an attribute from the ARFF file is nominal.
+
+        Args:
+            attr_index (int): The index of the desired attribute
+
+        Returns:
+            (bool): True if the attribute is nominal; False otherwise.
+        """
+        return not self.is_continuous(attr_index)
+
+    def split(self, split=(0.5, 0.5)):
+        """Split the data into separate folds.
+
+        Args:
+        split (float | list[float...]):
+            - if the argument is a float, will split the dataset in half with
+              the first half getting the percentage indicated.
+              Expected values: [0, 1]
+
+            - if the argument is a list, it will split the dataset into
+              len(split) separate Datasets according to the percentages listed.
+              Expected values in list: [0, 1]
+
+        return (list[Dataset...]): a list of Datasets, in the order given by
+            split argument.
+
+
+        TODO: test
+        """
+        if type(split) == float:
+            d = Dataset()
+            d._dataset_name = self._dataset_name
+            d._attributes = self._attributes
+            d._str_to_enum = self._str_to_enum
+            d._enum_to_str = self._enum_to_str
+
+            num_entries = int(split * self.size)
+            d._data = self._data[:num_entries]
+            self._data = self._data[num_entries:]
+
+            return d, self
+        elif len(split) == 1:
+            return [self]
         else:
-            c = list(zip(self._data, buddy.data))
-            random.shuffle(c)
-            self._data, buddy.data = zip(*c)
+            first, rest = self.split(split[0])
+            return first, *rest.split(split[1:])
+
+    def shuffle(self):
+        """Shuffle the dataset randomly."""
+        np.random.shuffle(self._data)
 
     def normalize(self):
-        """Normalize each continuous attribute."""
+        """Normalize each continuous attribute.
+
+        TODO: Is it a bad thing to only normalize continuous data?
+        """
         for i in range(self.num_attributes):
             if self.is_continuous(i):
-                col = self.get_attribute_column(i)
+                col = self._data[:, i]
                 min = np.min(col)
                 max = np.max(col)
                 col = (col-min)/(max-min)
                 self._data[:, i] = col
 
-    def numpy(self):
-        return self._data
+    ############################################################################
+    # PRIVATE FUNCTIONS                                                        #
+    ############################################################################
 
     def _load_arff(self, filename):
         self._data = []
@@ -230,9 +312,29 @@ class Dataset(object):
 
         return row
 
-    def __getitem__(self, item):
+    ############################################################################
+    # OPERATOR OVERRIDES                                                       #
+    ############################################################################
+
+    def __copy__(self):
+        d = Dataset()
+        d._dataset_name = self._dataset_name
+        d._attributes = self._attributes
+        d._str_to_enum = self._str_to_enum
+        d._enum_to_str = self._enum_to_str
+        d._data = self._data
+
+        return d
+
+    def __add__(self, other):
+        """Merge two datasets together."""
+        d = copy(self)
+        d._data = np.concatenate([self._data, other._data], axis=0)
+        return d
+
+    def __getitem__(self, index):
         """Index operator override. Enables for-each iteration over the class."""
-        return self.get(item)
+        return self._data[index]
 
     def __len__(self):
         """Number of data entries."""

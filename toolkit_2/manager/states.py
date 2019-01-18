@@ -19,7 +19,6 @@ class ManagerState(object):
     def test(self, model, features, targets, methods):
         raise NotImplementedError
 
-
     def start_timer(self):
         self.start = time.time()
 
@@ -27,15 +26,9 @@ class ManagerState(object):
         self.end = time.time()
         print(f"Time to train: {self.end - self.start}s")
 
-    @staticmethod
-    def separate_targets(datasets):
-        features = [dataset.inputs for dataset in datasets]
-        targets = [dataset.targets for dataset in datasets]
-        return features, targets
 
-
-class NoSplit(ManagerState):
-    """NoSplit()
+class Training(ManagerState):
+    """Training()
     Make no split of the dataset into Training/Test.
     """
 
@@ -56,8 +49,8 @@ class NoSplit(ManagerState):
         return metrics
 
 
-class NoValidation(ManagerState):
-    """NoValidation()
+class StaticSplit(ManagerState):
+    """StaticSplit()
     Separate dataset into Training/Testing sets.
     """
 
@@ -83,7 +76,8 @@ class NoValidation(ManagerState):
             metrics[name] = method(model, features, targets)
         return metrics
 
-class WithValidation(ManagerState):
+
+class RandomSplit(ManagerState):
     """WithValidation()
 
     """

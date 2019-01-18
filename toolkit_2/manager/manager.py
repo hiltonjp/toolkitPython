@@ -28,7 +28,6 @@ class MLSystemManager(object):
             'decisiontree':DecisionTree
         }
 
-
     def get_learner(self,model):
         if model in self.models:
             return self.models[model]()
